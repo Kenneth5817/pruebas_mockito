@@ -6,18 +6,17 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
+import org.mockito.*;
 
-public class EmployeeManagerTest {
+import java.util.Collections;
+import java.util.List;
 
-	@Mock
+//public class EmployeeManagerTest {
+
+	/**@Mock
 	private EmployeeRepository employeeRepository;
 
 	@Mock
@@ -27,7 +26,7 @@ public class EmployeeManagerTest {
 	 * Explica en este comentario que efecto tiene
 	 * esta anotacion @InjectMocks
 	 */
-	@InjectMocks
+	/**@InjectMocks
 	private EmployeeManager employeeManager;
 
 	@Captor
@@ -54,7 +53,7 @@ public class EmployeeManagerTest {
 	 * Comprueba que al invocar employeeManagar.payEmployees
 	 * con el stub anterior no se paga a ningun empleado.
 	 */
-	@Test
+	/**@Test
 	public void testPayEmployeesReturnZeroWhenNoEmployeesArePresent() {
 
 	}
@@ -69,7 +68,7 @@ public class EmployeeManagerTest {
 	 * con los datos de pago del Employ del stub when-thenReturn inicialmente
 	 * creado.
 	 */
-	@Test
+	/**@Test
 	public void testPayEmployeesReturnOneWhenOneEmployeeIsPresentAndBankServicePayPaysThatEmployee() {
 
 	}
@@ -86,7 +85,7 @@ public class EmployeeManagerTest {
 	 * Por último, verificea que no hay más interacciones con el mock de bankService
 	 * -pista verifyNoiMoreInteractions.
 	 */
-	@Test
+	/**@Test
 	public void testPayEmployeesWhenSeveralEmployeeArePresent() {
 
 	}
@@ -101,7 +100,7 @@ public class EmployeeManagerTest {
 	 * a pay en el orden de la coleccion.
 	 * Por ultimo, verifica que despues de pagar no hay mas interacciones.
 	 */
-	@Test
+	/**@Test
 	public void testPayEmployeesInOrderWhenSeveralEmployeeArePresent() {
 
 	}
@@ -114,7 +113,7 @@ public class EmployeeManagerTest {
 	 * Pista: utiliza un InOrder inOrder = inOrder(bankService, employeeRepository) para
 	 * las verificaciones (verify).
 	 */
-	@Test
+	/**@Test
 	public void testExampleOfInOrderWithTwoMocks() {
 
 	}
@@ -133,7 +132,7 @@ public class EmployeeManagerTest {
 	 * con lo que se espera.
 	 * Por ultimo verifica que no hay mas interacciones con el mock de bankService.
 	 */
-	@Test
+	/**@Test
 	public void testExampleOfArgumentCaptor() {
 
 	}
@@ -147,7 +146,7 @@ public class EmployeeManagerTest {
 	 * verifica que la interaccion se realiza en el orden de bankService.pay las caracteristicas
 	 * del Employee toBePaid y a continuacion verifica tambien que se invoca toBePaid.setPaid true.
 	 */
-	@Test
+	/**@Test
 	public void testEmployeeSetPaidIsCalledAfterPaying() {
 
 	}
@@ -165,7 +164,7 @@ public class EmployeeManagerTest {
 	 * efecto de no pago.
 	 *
 	 */
-	@Test
+	/**@Test
 	public void testPayEmployeesWhenBankServiceThrowsException() {
 
 	}
@@ -183,7 +182,7 @@ public class EmployeeManagerTest {
 	 *  para el que se lanza la RuntimeException y el spy toBePaid segundo mock de la coleccion que si recibe el pago
 	 *  chequeando la interaccion con el metodo setPaid a false y true respectivamente.
 	 */
-	@Test
+	/**@Test
 	public void testOtherEmployeesArePaidWhenBankServiceThrowsException() {
 	}
 
@@ -202,9 +201,174 @@ public class EmployeeManagerTest {
 	 *  para el que se lanza la RuntimeException y el spy toBePaid segundo mock de la coleccion que si recibe el pago
 	 *  chequeando la interaccion con el metodo setPaid a false y true respectivamente.
 	 */
-	@Test
+	/**@Test
 	public void testArgumentMatcherExample() {
 
-	}
+	}**/
 
+	public class EmployeeManagerTest {
+
+		@Mock
+		private EmployeeRepository employeeRepository;
+
+		@Mock
+		private BankService bankService;
+
+		@InjectMocks
+		private EmployeeManager employeeManager;
+
+		@Captor
+		private ArgumentCaptor<String> idCaptor;
+
+		@Captor
+		private ArgumentCaptor<Double> amountCaptor;
+
+		@BeforeEach
+		public void setup() {
+			MockitoAnnotations.initMocks(this);
+		}
+
+		@Test
+		public void testPayEmployeesReturnZeroWhenNoEmployeesArePresent() {
+			when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(0);
+			verify(bankService, never()).pay(anyString(), anyDouble());
+		}
+
+		@Test
+		public void testPayEmployeesReturnOneWhenOneEmployeeIsPresentAndBankServicePayPaysThatEmployee() {
+			Employee employee = new Employee("1", 1000);
+			when(employeeRepository.findAll()).thenReturn(List.of(employee));
+			when(bankService.pay(anyString(), anyDouble())).thenReturn(true);
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(1);
+			verify(bankService).pay("1", 1000);
+		}
+
+		@Test
+		public void testPayEmployeesWhenSeveralEmployeeArePresent() {
+			Employee employee1 = new Employee("1", 1000);
+			Employee employee2 = new Employee("2", 2000);
+			when(employeeRepository.findAll()).thenReturn(List.of(employee1, employee2));
+			when(bankService.pay(anyString(), anyDouble())).thenReturn(true);
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(2);
+			verify(bankService).pay("1", 1000);
+			verify(bankService).pay("2", 2000);
+			verifyNoMoreInteractions(bankService);
+		}
+
+		@Test
+		public void testPayEmployeesInOrderWhenSeveralEmployeeArePresent() {
+			Employee employee1 = new Employee("1", 1000);
+			Employee employee2 = new Employee("2", 2000);
+			when(employeeRepository.findAll()).thenReturn(List.of(employee1, employee2));
+			when(bankService.pay(anyString(), anyDouble())).thenReturn(true);
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(2);
+			InOrder inOrder = inOrder(bankService);
+			inOrder.verify(bankService).pay("1", 1000);
+			((InOrder) inOrder).verify(bankService).pay("2", 2000);
+			verifyNoMoreInteractions(bankService);
+		}
+
+		@Test
+		public void testExampleOfInOrderWithTwoMocks() {
+			Employee employee1 = new Employee("1", 1000);
+			when(employeeRepository.findAll()).thenReturn(List.of(employee1));
+			when(bankService.pay(anyString(), anyDouble())).thenReturn(true);
+
+			employeeManager.payEmployees();
+
+			InOrder inOrder = inOrder(bankService, employeeRepository);
+			inOrder.verify(employeeRepository).findAll();
+			inOrder.verify(bankService).pay("1", 1000);
+			verifyNoMoreInteractions(bankService, employeeRepository);
+		}
+
+		@Test
+		public void testExampleOfArgumentCaptor() {
+			Employee employee1 = new Employee("1", 1000);
+			Employee employee2 = new Employee("2", 2000);
+			when(employeeRepository.findAll()).thenReturn(List.of(employee1, employee2));
+			when(bankService.pay(anyString(), anyDouble())).thenReturn(true);
+
+			employeeManager.payEmployees();
+
+			verify(bankService, times(2)).pay(idCaptor.capture(), amountCaptor.capture());
+			List<String> capturedIds = idCaptor.getAllValues();
+			List<Double> capturedAmounts = amountCaptor.getAllValues();
+			assertThat(capturedIds).containsExactly("1", "2");
+			assertThat(capturedAmounts).containsExactly(1000.0, 2000.0);
+			verifyNoMoreInteractions(bankService);
+		}
+
+		@Test
+		public void testEmployeeSetPaidIsCalledAfterPaying() {
+			when(employeeRepository.findAll()).thenReturn(List.of(toBePaid));
+			when(bankService.pay(anyString(), anyDouble())).thenReturn(true);
+
+			employeeManager.payEmployees();
+
+			InOrder inOrder = inOrder(bankService, toBePaid);
+			inOrder.verify(bankService).pay("2", 2000);
+			inOrder.verify(toBePaid).setPaid(true);
+			verifyNoMoreInteractions(bankService, toBePaid);
+		}
+
+		@Test
+		public void testPayEmployeesWhenBankServiceThrowsException() {
+			when(employeeRepository.findAll()).thenReturn(List.of(notToBePaid));
+			when(bankService.pay(anyString(), anyDouble())).thenThrow(new RuntimeException());
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(0);
+			verify(notToBePaid).setPaid(false);
+			verifyNoMoreInteractions(bankService);
+		}
+
+		@Test
+		public void testOtherEmployeesArePaidWhenBankServiceThrowsException() {
+			Employee employee1 = new Employee("1", 1000);
+			Employee employee2 = new Employee("2", 2000);
+			when(employeeRepository.findAll()).thenReturn(List.of(notToBePaid, employee1, employee2));
+			when(bankService.pay(anyString(), anyDouble()))
+					.thenThrow(new RuntimeException())
+					.thenReturn(true);
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(1);
+			verify(notToBePaid).setPaid(false);
+			verify(bankService).pay("1", 1000);
+			verify(bankService).pay("2", 2000);
+			verifyNoMoreInteractions(bankService);
+		}
+
+		@Test
+		public void testArgumentMatcherExample() {
+			Object notToBePaid;
+			when(employeeRepository.findAll()).thenReturn(Arrays.asList(notToBePaid, toBePaid));
+			when(bankService.pay(anyString(), anyDouble()))
+					.thenThrow(new RuntimeException())
+					.thenReturn(true);
+
+			int payments = employeeManager.payEmployees();
+
+			assertThat(payments).isEqualTo(1);
+			verify(notToBePaid).setPaid(false);
+			verify(toBePaid).setPaid(true);
+			verify(bankService, times(2)).pay(anyString(), anyDouble());
+			verifyNoMoreInteractions(bankService);
+		}
 }
