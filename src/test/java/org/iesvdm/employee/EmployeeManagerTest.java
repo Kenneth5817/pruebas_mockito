@@ -230,7 +230,7 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testPayEmployeesWhenBankServiceThrowsException() {
-		Employee notToBePaid = spy(new Employee("Nombre", 1000.0));
+		Employee notToBePaid = spy(new Employee("Juan", 1470.23));
 		Mockito.when(employeeRepository.findAll()).thenReturn(Collections.singletonList(notToBePaid));
 		Mockito.doThrow(new RuntimeException("Simulación de excepción en bankService.pay")).when(bankService).pay(any(), anyDouble());
 
@@ -254,21 +254,22 @@ public class EmployeeManagerTest {
 	@Test
 	public void testOtherEmployeesArePaidWhenBankServiceThrowsException() {
 
-		Employee notToBePaid = spy(new Employee("Lidia", 3150.0));
-		Employee toBePaid = spy(new Employee("Juana", 2720.0));
+		List<Employee> employees= new ArrayList<>();
+		employees.add(notToBePaid);
+		employees.add(toBePaid);
 
-		Mockito.when(employeeRepository.findAll())
-				.thenReturn(Arrays.asList(notToBePaid, toBePaid));
 
-		Mockito.doThrow(new RuntimeException("Excepción del notToBePaid"))
-				.doNothing()
-				.when(bankService).pay(eq(notToBePaid.getId()), anyDouble());
+		Mockito.when(employeeRepository.findAll()).thenReturn(employees);
 
-		employeeManager.payEmployees(); // Esta línea puede lanzar una RuntimeException
+		doThrow(new RuntimeException()).doNothing().when(bankService).pay(anyString(), anyDouble());
+		employeeManager.payEmployees();
+		verify(bankService,times(2)).pay(anyString(), anyDouble());
 
 		verify(notToBePaid).setPaid(false);
 		verify(toBePaid).setPaid(true);
 
+		assertThat(toBePaid.isPaid()).isTrue();
+		assertThat(notToBePaid.isPaid()).isFalse();
 	}
 
 	/**
@@ -288,29 +289,26 @@ public class EmployeeManagerTest {
 
 	@Test
 	public void testArgumentMatcherExample() {
-		// Crear los objetos de prueba
-		Employee notToBePaid = spy(new Employee("Pepe", 1930));
-		Employee toBePaid = spy(new Employee("Rosa", 2530));
+		List<Employee>employees=new ArrayList<>();
 
-		// Configurar el stubbing para employeeRepository.findAll
-		Mockito.when(employeeRepository.findAll()).thenReturn(Arrays.asList(toBePaid, notToBePaid));
+		employees.add(notToBePaid);
+		employees.add(toBePaid);
 
-		// Configurar el stubbing con ArgumentMatchers para el método pay de bankService
+		Mockito.when(employeeRepository.findAll()).thenReturn(employees);
+
 		Mockito.doThrow(new RuntimeException()).when(bankService).pay(eq("1"), anyDouble());
-		Mockito.doNothing().when(bankService).pay(not(eq("1")).toString(), anyDouble());
+		Mockito.doNothing().when(bankService).pay(argThat(s -> s.equals("2")), anyDouble());
 
-		// Llamar al método que se va a probar
 		employeeManager.payEmployees();
 
-		// Verificar que el método pay de bankService se llamó con los argumentos esperados
-		verify(bankService).pay("1", notToBePaid.getSalary());
-		verify(bankService).pay(not(eq("1")).toString(), eq(toBePaid.getSalary()));
+		Mockito.verify(bankService).pay("1", notToBePaid.getSalary());
+		Mockito.verify(bankService).pay("2", toBePaid.getSalary());
 
-		// Verificar interacciones con el spy notToBePaid
 		verify(notToBePaid).setPaid(false);
-
-		// Verificar interacciones con el spy toBePaid
 		verify(toBePaid).setPaid(true);
+
+		assertThat(toBePaid.isPaid()).isTrue();
+		assertThat(notToBePaid.isPaid()).isFalse();
 	}
 }
 
