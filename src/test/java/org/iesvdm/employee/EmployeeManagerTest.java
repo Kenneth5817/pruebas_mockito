@@ -56,6 +56,7 @@ public class EmployeeManagerTest {
 	@Test
 	public void testPayEmployeesReturnZeroWhenNoEmployeesArePresent() {
 		Mockito.when(employeeRepository.findAll()).thenReturn(new ArrayList<>());
+		/**Comprobamos usando stub que no se paga a ningun empleado**/
 		assertThat(employeeManager.payEmployees()).isEqualTo(0);
 	}
 
@@ -72,6 +73,7 @@ public class EmployeeManagerTest {
 	@Test
 	public void testPayEmployeesReturnOneWhenOneEmployeeIsPresentAndBankServicePayPaysThatEmployee() {
 		Employee employee1 = new Employee("Lucas", 2030);
+		/**Creamos una lista de empleados donde almacenamos los datos**/
 		ArrayList<Employee> employees = new ArrayList<>(Arrays.asList(employee1));
 		Mockito.when(employeeRepository.findAll()).thenReturn(employees);
 		employeeManager.payEmployees();
@@ -117,15 +119,18 @@ public class EmployeeManagerTest {
 	@Test
 	public void testPayEmployeesInOrderWhenSeveralEmployeeArePresent() {
 
+		/**Creamos los empleados**/
 		Employee employee1 = new Employee("Rocio", 2116);
 		Employee employee2 = new Employee("Paco", 1021.34);
 		Mockito.when(employeeRepository.findAll()).thenReturn(Arrays.asList(employee1, employee2));
 		employeeManager.payEmployees();
 
+		/**Los ordenamos**/
 		InOrder inOrder = inOrder(bankService);
 		inOrder.verify(bankService).pay("Rocio", 2116);
 		inOrder.verify(bankService).pay("Paco", 1021.34);
 
+		/**Verificamos que no haya más interacciones**/
 		verifyNoMoreInteractions(bankService);
 	}
 
@@ -140,9 +145,11 @@ public class EmployeeManagerTest {
 	@Test
 	public void testExampleOfInOrderWithTwoMocks() {
 
+		/**Creamos 2 objetos empleados**/
 		Employee employee1 = new Employee("Rocío", 2116);
 		Employee employee2 = new Employee("Paco", 1021.34);
 
+		/**Usamos when then return**/
 		Mockito.when(employeeRepository.findAll()).thenReturn(Arrays.asList(employee1, employee2));
 		employeeManager.payEmployees();
 
@@ -150,8 +157,10 @@ public class EmployeeManagerTest {
 		inOrder.verify(employeeRepository).findAll();
 		inOrder.verify(bankService).pay("Rocío", 2116);
 
+		/**Comprobamos que se encuentre en el repositorio**/
 		verify(employeeRepository).findAll();
 
+		/**Verificamos de que sea correcto**/
 		inOrder.verify(bankService).pay("Paco", 1021.34);
 
 		verifyNoMoreInteractions(bankService);
@@ -173,13 +182,14 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testExampleOfArgumentCaptor() {
+		/**Creamos objeto empleados(2)**/
 		Employee employee1 = new Employee("Manuel", 1835.25);
 		Employee employee2 = new Employee("David", 2121.21);
 
 		Mockito.when(employeeRepository.findAll()).thenReturn(Arrays.asList(employee1, employee2));
 		employeeManager.payEmployees();
 
-
+		/**Usamos el argumentCaptor**/
 		ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass(Double.class);
 
@@ -188,6 +198,7 @@ public class EmployeeManagerTest {
 		List<String> idsCaptured = idCaptor.getAllValues();
 		List<Double> amountsCaptured = amountCaptor.getAllValues();
 
+		/**Nos aseguramos de que contenga al empleado**/
 		assertThat(idsCaptured).containsExactly("Manuel", "David");
 		assertThat(amountsCaptured).containsExactly(1835.25, 2121.21);
 		verifyNoMoreInteractions(bankService);
@@ -206,13 +217,14 @@ public class EmployeeManagerTest {
 	@Test
 	public void testEmployeeSetPaidIsCalledAfterPaying() {
 
+		/**Usamos el spy**/
 		Employee toBePaid = spy(new Employee("Pedro", 2013.23));
 		Mockito.when(employeeRepository.findAll()).thenReturn(Arrays.asList(toBePaid));
 
 		employeeManager.payEmployees();
 		InOrder inOrder = inOrder(bankService, toBePaid);
 
-		// Verifica que se llama a bankService.pay() antes de toBePaid.setPaid(true)
+		/**Verificamos que se llama a bankService.pay() antes de toBePaid.setPaid(true)**/
 		inOrder.verify(bankService).pay(eq(toBePaid.getId()), anyDouble());
 		inOrder.verify(toBePaid).setPaid(true);
 	}
@@ -230,10 +242,12 @@ public class EmployeeManagerTest {
 	 */
 	@Test
 	public void testPayEmployeesWhenBankServiceThrowsException() {
+		/**Nuevamente usamos el spy**/
 		Employee notToBePaid = spy(new Employee("Juan", 1470.23));
 		Mockito.when(employeeRepository.findAll()).thenReturn(Collections.singletonList(notToBePaid));
 		Mockito.doThrow(new RuntimeException("Simulación de excepción en bankService.pay")).when(bankService).pay(any(), anyDouble());
 
+		/**Comprobamos que sea correcta la declaración**/
 		employeeManager.payEmployees();
 		verify(notToBePaid).setPaid(false);
 	}
@@ -254,17 +268,21 @@ public class EmployeeManagerTest {
 	@Test
 	public void testOtherEmployeesArePaidWhenBankServiceThrowsException() {
 
+		/**Creamos un arrayList donde almacenaremos los empleados**/
 		List<Employee> employees= new ArrayList<>();
+		/**Los añadimos**/
 		employees.add(notToBePaid);
 		employees.add(toBePaid);
 
 
 		Mockito.when(employeeRepository.findAll()).thenReturn(employees);
 
+		/**Lanzamos una excepcion**/
 		doThrow(new RuntimeException()).doNothing().when(bankService).pay(anyString(), anyDouble());
 		employeeManager.payEmployees();
 		verify(bankService,times(2)).pay(anyString(), anyDouble());
 
+		/**Comprobamos notToBePaid y el toBePaid**/
 		verify(notToBePaid).setPaid(false);
 		verify(toBePaid).setPaid(true);
 
@@ -290,23 +308,26 @@ public class EmployeeManagerTest {
 	@Test
 	public void testArgumentMatcherExample() {
 		List<Employee>employees=new ArrayList<>();
-
+		/**Creamos un arrayList y añadimos a la lista los resultados**/
 		employees.add(notToBePaid);
 		employees.add(toBePaid);
 
 		Mockito.when(employeeRepository.findAll()).thenReturn(employees);
 
+		/**Lanzamos la excepcion**/
 		Mockito.doThrow(new RuntimeException()).when(bankService).pay(eq("1"), anyDouble());
 		Mockito.doNothing().when(bankService).pay(argThat(s -> s.equals("2")), anyDouble());
 
 		employeeManager.payEmployees();
 
+		/**Comprobamos con el verify**/
 		Mockito.verify(bankService).pay("1", notToBePaid.getSalary());
 		Mockito.verify(bankService).pay("2", toBePaid.getSalary());
 
 		verify(notToBePaid).setPaid(false);
 		verify(toBePaid).setPaid(true);
 
+		/**NOs aseguramos de que sea así usando el AssertThat**/
 		assertThat(toBePaid.isPaid()).isTrue();
 		assertThat(notToBePaid.isPaid()).isFalse();
 	}

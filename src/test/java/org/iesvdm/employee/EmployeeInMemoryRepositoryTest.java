@@ -36,9 +36,11 @@ public class EmployeeInMemoryRepositoryTest {
 	 */
 	@Test
 	public void testEmployeeRepositoryFindAll() {
+		/**Creamos los objetos empleados**/
 		Employee employee1=new Employee("Juan",1550.40);
 		Employee employee2=new Employee("Pedro",2515.27);
 
+		/**Añadimos a los empleados**/
 		employees.add(employee1);
 		employees.add(employee2);
 
@@ -55,6 +57,7 @@ public class EmployeeInMemoryRepositoryTest {
 	public void testEmployeeRepositorySaveNewEmployee() {
 		Employee employee3=new Employee("Raquel",2120.80);
 		employeeRepository.save(employee3);
+		/**Nos aseguramos de que emloyeeRepositoru encuentre al employee3**/
 		Assertions.assertThat(employeeRepository.findAll()).containsExactly(employee3);
 	}
 
@@ -69,10 +72,12 @@ public class EmployeeInMemoryRepositoryTest {
 	 */
 	@Test
 	public void testEmployeeRepositorySaveExistingEmployee() {
+		/**Creamos a los empleados**/
 		Employee employee1=new Employee("Juan",4231.21);
 		Employee employee2=new Employee("Pedro",1425.63);
 		Employee employee3=new Employee("Raquel",2546.36);
 
+		/**Los guardamos**/
 		employeeRepository.save(employee1);
 		employeeRepository.save(employee2);
 		employeeRepository.save(employee3);
